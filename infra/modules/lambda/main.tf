@@ -61,6 +61,7 @@ resource "aws_lambda_function" "func_extract" {
   environment {
     variables = var.environment
   }
+
   tags = var.tags
 
   vpc_config {

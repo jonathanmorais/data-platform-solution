@@ -36,13 +36,53 @@ module "lambda-extraction" {
     security_groups = ["sg-0066899a04deddb7e"]
   }
   tags = local.tags
-  
-  package = "../../../lambda-extract.zip"
 
-  environment = {}
+  environment = {
+    "URL"              = "https://api.punkapi.com/v2/beers/random"
+    "DELIVERY_STREAM"  = module.kinesis-fire-all.name
+  }
+ 
+  package = "../../../lambda-extract.zip"
 
   memory  = 128
   timeout = 60
   runtime = "python3.6"
   handler = "lambda_extract.lambda_handler"
+}
+
+module "bucket-events" {
+    source  = "../../modules/s3"
+    name    = "ml-platform"
+    tags    = local.tags
+}
+
+module "kinesis-fire-all" {
+    source  = "../../modules/kinesis-fire"
+    name    = "events-punkapi"
+
+    enabled = false
+
+    event = {
+        scope   = "ml-platform"
+        name    = "punkapi"    
+    }
+    bucket = {
+        arn  = module.bucket-events.arn
+        name = module.bucket-events.name  
+    }
+
+    database = module.glue_catalog.database_name
+    table    = module.glue_catalog.table_name
+
+    tags    = local.tags
+}
+
+module "glue_catalog" {
+    source  = "../../modules/glue"
+    event = {
+        scope   = "ml-platform"
+        name    = "punkapi"    
+    }
+
+    tags = local.tags
 }
