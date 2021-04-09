@@ -1,0 +1,39 @@
+stages:
+    - lambda
+    - plan
+ 
+.template_terraform: &template_terraform
+  image:
+    name: hashicorp/terraform:0.12.29
+    entrypoint: [""]
+  variables:
+    AWS_ACCESS_KEY_ID: $PROD_AWS_ACCESS_KEY_ID
+    AWS_SECRET_ACCESS_KEY: $PROD_AWS_SECRET_ACCESS_KEY  
+  before_script:
+    - apk add jq
+    - export TF_VAR_url_extract='https://api.punkapi.com/v2/beers/random'
+    - cd infra/environments/prod
+    - terraform init --backend-config="access_key=$AWS_ACCESS_KEY_ID --backend-config=secret_key=$AWS_SECRET_ACCESS_KEY
+
+lambda:
+    image: python:3.6-alpine
+    stage: lambda
+    before_script:
+        - apk add zip unzip
+        - apk add unzip
+    script:
+        - cd app/ && zip -r -9 ../lambda-extract.zip .
+    artifacts:
+        paths:
+        - lambda-extract.zip
+
+prod:plan:
+    <<: *template_terraform
+    stage: plan
+    variables:
+        AWS_ACCESS_KEY_ID: $PROD_AWS_ACCESS_KEY_ID
+        AWS_SECRET_ACCESS_KEY: $PROD_AWS_SECRET_ACCESS_KEY
+    dependencies:
+        - lambda
+    script:
+        - terraform plan    
