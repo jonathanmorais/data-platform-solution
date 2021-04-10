@@ -5,6 +5,9 @@ variable "event" {
   })
 }
 
+variable "bucket" {
+  type = string
+}
 
 variable "tags" {
   type = map(string)
@@ -20,6 +23,23 @@ resource "aws_glue_catalog_table" "aws_glue_catalog_table" {
     EXTERNAL              = "TRUE"
     "parquet.compression" = "SNAPPY"
     "classification"      = "parquet"
+  }
+
+  storage_descriptor {
+
+    location      = "s3://${var.bucket}/events/${var.event.scope}/${var.event.name}/"
+    input_format  = "org.apache.hadoop.hive.ql.io.parquet.MapredParquetInputFormat"
+    output_format = "org.apache.hadoop.hive.ql.io.parquet.MapredParquetOutputFormat"
+
+    ser_de_info {
+      name                  = "ParquetHiveSerDe"
+      serialization_library = "org.apache.hadoop.hive.ql.io.parquet.serde.ParquetHiveSerDe"
+
+      parameters = {
+        "serialization.format" = 1
+      }
+    }
+
   }
 
 }

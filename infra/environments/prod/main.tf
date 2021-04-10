@@ -1,7 +1,7 @@
 provider "aws" {
   region = "us-east-1"
   shared_credentials_file = "~/.aws/credentials"
-  profile                 = "personal"
+  profile                 = "default"
 }
 
 terraform {
@@ -39,26 +39,39 @@ module "lambda-extraction" {
 
   environment = {
     "URL"              = "https://api.punkapi.com/v2/beers/random"
-    "DELIVERY_STREAM"  = module.kinesis-fire-all.name
+    "DELIVERY_STREAM"  = module.kinesis-fire-transform.name
   }
  
-  package = "../../../lambda-extract.zip"
+  package = "../../../client.zip"
 
   memory  = 128
   timeout = 60
   runtime = "python3.6"
-  handler = "lambda_extract.lambda_handler"
+  handler = "client.lambda_handler"
 }
 
-module "bucket-events" {
+module "bucket-events-raw" {
     source  = "../../modules/s3"
-    name    = "ml-platform"
+    name    = "raw"
     tags    = local.tags
 }
 
+module "bucket-events-cleaned" {
+    source  = "../../modules/s3"
+    name    = "cleaned"
+    tags    = local.tags
+}
+
+module "kinesis-data-stream" {
+  source = "../../modules/kinesis-stream"
+  name = "stream"
+  retention_period = 48
+  tags    = local.tags
+}
+
 module "kinesis-fire-all" {
-    source  = "../../modules/kinesis-fire"
-    name    = "events-punkapi"
+    source  = "../../modules/kinesis-fire-all"
+    name    = "events-all"
 
     enabled = false
 
@@ -67,9 +80,31 @@ module "kinesis-fire-all" {
         name    = "punkapi"    
     }
     bucket = {
-        arn  = module.bucket-events.arn
-        name = module.bucket-events.name  
+        arn  = module.bucket-events-raw.arn
+        name = module.bucket-events-raw.name  
     }
+
+    kinesis_stream_arn = module.kinesis-data-stream.data_stream_arn   
+
+    tags    = local.tags
+}
+
+module "kinesis-fire-transform" {
+    source  = "../../modules/kinesis-fire-transform"
+    name    = "events-transform"
+
+    enabled = false
+
+    event = {
+        scope   = "ml-platform"
+        name    = "punkapi"    
+    }
+    bucket = {
+        arn  = module.bucket-events-cleaned.arn
+        name = module.bucket-events-cleaned.name  
+    }
+
+    kinesis_stream_arn = module.kinesis-data-stream.data_stream_arn
 
     database = module.glue_catalog.database_name
     table    = module.glue_catalog.table_name
@@ -79,6 +114,7 @@ module "kinesis-fire-all" {
 
 module "glue_catalog" {
     source  = "../../modules/glue"
+    bucket = module.bucket-events-cleaned.name
     event = {
         scope   = "ml-platform"
         name    = "punkapi"    

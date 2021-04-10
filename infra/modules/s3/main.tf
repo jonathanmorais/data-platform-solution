@@ -7,7 +7,7 @@ variable "name" {
 }
 
 resource "aws_s3_bucket" "events_bucket" {
-  bucket = var.name
+  bucket = "${var.name}-ml-platform-event"
   acl    = "private"
 
   tags = var.tags
