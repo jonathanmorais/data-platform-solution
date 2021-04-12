@@ -31,15 +31,16 @@ variable "kinesis_stream_arn" {
 
 resource "aws_kinesis_firehose_delivery_stream" "kinesis_firehose_stream_all" {
   name        = var.name
-  destination = "s3"
+  destination = "extended_s3"
   tags        = var.tags
 
-  s3_configuration {
+  extended_s3_configuration {
     role_arn        = aws_iam_role.firehose_role.arn
     bucket_arn      = var.bucket.arn
     buffer_size     = 10
-    buffer_interval = 400
-    prefix          = "events/${var.event.scope}/${var.event.name}/all/year=!{timestamp:yyyy}/month=!{timestamp:MM}/day=!{timestamp:dd}/hl_hour=!{timestamp:HH}/"
+    buffer_interval = 60
+    prefix          = "events/${var.event.scope}/${var.event.name}/year=!{timestamp:yyyy}/month=!{timestamp:MM}/day=!{timestamp:dd}/hl_hour=!{timestamp:HH}/"
+    error_output_prefix = "error/year=!{timestamp:yyyy}/month=!{timestamp:MM}/whl_day=!{timestamp:dd}/hour=!{timestamp:HH}/!{firehose:error-output-type}"
   }
   
   kinesis_source_configuration {
@@ -51,7 +52,7 @@ resource "aws_kinesis_firehose_delivery_stream" "kinesis_firehose_stream_all" {
 
 resource "aws_iam_role" "firehose_role" {
 
-  name               = "event-${var.event.scope}-${var.event.name}-firehose-role"
+  name               = "event-${var.event.scope}-${var.event.name}-${var.name}-role"
   tags               = var.tags
   assume_role_policy = <<EOF
 {
@@ -71,7 +72,7 @@ EOF
 }
 
 resource "aws_iam_policy" "fire_hose_policy" {
-  name        = "event-${var.event.scope}-${var.event.name}-firehose-policy"
+  name        = "event-${var.event.scope}-${var.event.name}-${var.name}-policy"
 
   policy = <<EOF
 {
@@ -80,10 +81,11 @@ resource "aws_iam_policy" "fire_hose_policy" {
     {
       "Effect": "Allow",
       "Action": [
-        "glue:GetTableVersions"
+        "glue:*",
+        "kinesis:*"
       ],
       "Resource": "*"
-    },  
+    },
     {
       "Action": [
           "s3:AbortMultipartUpload",

@@ -27,11 +27,11 @@ variable "tags" {
   type = map(string)
 }
 
-variable "enabled" {
-  type = bool
+variable "kinesis_stream_arn" {
+  type = string
 }
 
-variable "kinesis_stream_arn" {
+variable "processor" {
   type = string
 }
 
@@ -51,6 +51,18 @@ resource "aws_kinesis_firehose_delivery_stream" "kinesis_firehose_stream_transfo
     buffer_size     = 128
     buffer_interval = 60
 
+    processing_configuration {
+      enabled = "true"
+
+      processors {
+        type = "Lambda"
+
+        parameters {
+          parameter_name  = "LambdaArn"
+          parameter_value = var.processor
+        }
+      }
+    }
 
     data_format_conversion_configuration {
       input_format_configuration {
@@ -78,7 +90,7 @@ resource "aws_kinesis_firehose_delivery_stream" "kinesis_firehose_stream_transfo
 
 resource "aws_iam_role" "firehose_role" {
 
-  name               = "event-${var.event.scope}-${var.event.name}-firehose-role"
+  name               = "event-${var.event.scope}-${var.event.name}-${var.name}-role"
   tags               = var.tags
   assume_role_policy = <<EOF
 {
@@ -98,7 +110,7 @@ EOF
 }
 
 resource "aws_iam_policy" "fire_hose_policy" {
-  name        = "event-${var.event.scope}-${var.event.name}-firehose-policy"
+  name        = "event-${var.event.scope}-${var.event.name}-${var.name}-policy"
 
   policy = <<EOF
 {
@@ -107,10 +119,11 @@ resource "aws_iam_policy" "fire_hose_policy" {
     {
       "Effect": "Allow",
       "Action": [
-        "glue:GetTableVersions"
+        "glue:*",
+        "kinesis:*"
       ],
       "Resource": "*"
-    },  
+    },
     {
       "Action": [
           "s3:AbortMultipartUpload",

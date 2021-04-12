@@ -48,7 +48,7 @@ resource "aws_cloudwatch_log_group" "lambda" {
   tags              = var.tags
 }
 
-resource "aws_lambda_function" "func_extract" {
+resource "aws_lambda_function" "function" {
   filename         = var.package
   function_name    = var.service
   source_code_hash = filebase64sha256(var.package)
@@ -61,7 +61,6 @@ resource "aws_lambda_function" "func_extract" {
   environment {
     variables = var.environment
   }
-
   tags = var.tags
 
   vpc_config {
@@ -72,33 +71,7 @@ resource "aws_lambda_function" "func_extract" {
   depends_on = [aws_cloudwatch_log_group.lambda]
 }
 
-resource "aws_lambda_permission" "allow_cloudwatch" {
-  statement_id  = "AllowExecutionFromCloudWatch"
-  action        = "lambda:InvokeFunction"
-  function_name = aws_lambda_function.func_extract.function_name
-  principal     = "events.amazonaws.com"
-
-}
-
-resource "aws_cloudwatch_metric_alarm" "errors-alarm" {
-  alarm_name          = "${aws_lambda_function.func_extract.function_name}-error-alarm"
-  comparison_operator = "GreaterThanOrEqualToThreshold"
-  evaluation_periods  = 1
-  metric_name         = "Errors"
-  namespace           = "AWS/Lambda"
-  period              = 60
-  statistic           = "Sum"
-  threshold           = 1
-  alarm_description   = "AWS/Lambda Errors - ${aws_lambda_function.func_extract.function_name}"
-  alarm_actions = ["arn:aws:sns:us-east-1:280917728158:squad-data-alarm"]
-
-  dimensions = {
-    FunctionName = aws_lambda_function.func_extract.function_name
-  }
-
-  tags = var.tags
-}
 
 output "arn" {
-  value = aws_lambda_function.func_extract.arn
+  value = aws_lambda_function.function.arn
 }

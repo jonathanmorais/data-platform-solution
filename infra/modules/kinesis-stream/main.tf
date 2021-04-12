@@ -11,7 +11,7 @@ variable "retention_period" {
 }
 
 resource "aws_kinesis_stream" "data_stream" {
-  name             = "${var.name}-ml-platform"
+  name             = "${var.name}_ml_platform"
   shard_count      = 1
   retention_period = var.retention_period
 
@@ -25,4 +25,8 @@ resource "aws_kinesis_stream" "data_stream" {
 
 output "data_stream_arn" {
   value = aws_kinesis_stream.data_stream.arn
+}
+
+output "data_stream_name" {
+  value = aws_kinesis_stream.data_stream.name
 }
