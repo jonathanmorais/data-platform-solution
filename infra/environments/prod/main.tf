@@ -130,10 +130,12 @@ module "kinesis-data-stream" {
 }
 
 module "kinesis-fire-all" {
-    source  = "../../modules/kinesis-fire-all"
+    source  = "../../modules/kinesis-firehose"
     name    = "events_all"
 
     enabled = false
+
+    processor = module.lambda-processor.arn
 
     event = {
         scope   = "ml-platform"
@@ -150,8 +152,10 @@ module "kinesis-fire-all" {
 }
 
 module "kinesis-fire-transform" {
-    source  = "../../modules/kinesis-fire-transform"
+    source  = "../../modules/kinesis-firehose"
     name    = "events_transform"
+
+    enabled = true
 
     processor = module.lambda-processor.arn
     event = {
@@ -165,15 +169,13 @@ module "kinesis-fire-transform" {
 
     kinesis_stream_arn = module.kinesis-data-stream.data_stream_arn
 
-    database = module.glue_catalog.database_name
-    table    = module.glue_catalog.table_name
-
     tags    = local.tags
 }
 
 module "glue_catalog" {
     source  = "../../modules/glue"
     bucket = module.bucket-events-cleaned.name
+    cron = "0 0/1 * * ? *"
     event = {
         scope   = "ml-platform"
         name    = "punkapi"    
