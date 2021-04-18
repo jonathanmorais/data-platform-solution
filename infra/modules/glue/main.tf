@@ -26,7 +26,6 @@ resource "aws_glue_catalog_table" "aws_glue_catalog_table" {
   parameters = {
     EXTERNAL              = "TRUE"
     "classification"      = "csv"
-    "skip.header.line.count" = "1"
     "CrawlerSchemaSerializerVersion" = "1.0"
     "CrawlerSchemaDeserializerVersion"= "1.0"
     "columnsOrdered" = true
@@ -53,12 +52,8 @@ resource "aws_glue_catalog_table" "aws_glue_catalog_table" {
     }
 
     columns {
-      name = "index"
-      type = "string"
-    }
-    columns {
       name = "id"
-      type = "string"
+      type = "int"
     }
 
     columns {
@@ -68,36 +63,36 @@ resource "aws_glue_catalog_table" "aws_glue_catalog_table" {
 
     columns {
       name    = "abv"
-      type    = "string"
+      type    = "float"
     }
 
     columns {
       name    = "ibu"
-      type    = "string"
+      type    = "float"
     }
 
     columns {
       name    = "target_fg"
-      type    = "string"
+      type    = "int"
     }
 
     columns {
       name    = "target_og"
-      type    = "string"
+      type    = "int"
     }
     columns {
       name    = "ebc"
-      type    = "string"
+      type    = "float"
     }
 
     columns {
       name    = "srm"
-      type    = "string"
+      type    = "float"
     }
 
     columns {
       name    = "ph"
-      type    = "string"
+      type    = "float"
     }
   }
 
