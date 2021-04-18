@@ -1,0 +1,3 @@
+PyAthenaJDBC
+PyAthena==1.10.2
+boto3
