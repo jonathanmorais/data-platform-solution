@@ -1,7 +1,7 @@
 provider "aws" {
   region = "us-east-1"
-  shared_credentials_file = "~/.aws/credentials"
-  profile                 = "default"
+  access_key = var.access_key
+  secret_key = var.access_secret_key
 }
 
 terraform {
@@ -80,12 +80,12 @@ module "lambda-extraction" {
     "STREAM_NAME"  = module.kinesis-data-stream.data_stream_name
   }
  
-  package = "../../../client.zip"
+  package = "../../../extract.zip"
 
   memory  = 128
   timeout = 60
   runtime = "python3.6"
-  handler = "client.lambda_handler"
+  handler = "extract.lambda_handler"
 }
 
 module "lambda-processor" {
@@ -102,12 +102,12 @@ module "lambda-processor" {
     "STREAM_NAME"  = module.kinesis-data-stream.data_stream_name
   }
  
-  package = "../../../client_processor.zip"
+  package = "../../../processor.zip"
 
   memory  = 128
   timeout = 60
   runtime = "python3.6"
-  handler = "client_processor.lambda_handler"
+  handler = "processor.lambda_handler"
 }
 
 module "bucket-events-raw" {
