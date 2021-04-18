@@ -15,18 +15,30 @@ stages:
     - cd infra/environments/prod
     - terraform init --backend-config="access_key=$AWS_ACCESS_KEY_ID --backend-config=secret_key=$AWS_SECRET_ACCESS_KEY
 
-lambda:
+lambda:extract:
     image: python:3.6-alpine
     stage: lambda
     before_script:
         - apk add zip unzip
         - apk add unzip
     script:
-        - cd app/ && zip -r -9 ../lambda-extract.zip .
+        - cd lambda/client_extract && zip -r -9 ../../lambda-extract.zip .
     artifacts:
         paths:
-        - lambda-extract.zip
+        - client.zip
 
+lambda:processor:
+    image: python:3.6-alpine
+    stage: lambda
+    before_script:
+        - apk add zip unzip
+        - apk add unzip
+    script:
+        - cd lambda/client_transform && zip -r -9 ../../client_processor.zip .
+    artifacts:
+        paths:
+        - client_processor.zip
+        
 prod:plan:
     <<: *template_terraform
     stage: plan
@@ -36,4 +48,16 @@ prod:plan:
     dependencies:
         - lambda
     script:
-        - terraform plan    
+        - make plan
+
+prod:deploy:
+    <<: *template_terraform
+    stage: deploy
+    when: manual
+    variables:
+        AWS_ACCESS_KEY_ID: $PROD_AWS_ACCESS_KEY_ID
+        AWS_SECRET_ACCESS_KEY: $PROD_AWS_SECRET_ACCESS_KEY
+    dependencies:
+        - lambda
+    script:
+        - make deploy       

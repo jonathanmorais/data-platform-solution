@@ -3,13 +3,6 @@ variable "bucket" {
     arn  = string
     name = string
   })
-
-}
-variable "database" {
-  type = string
-}
-variable "table" {
-  type = string
 }
 
 variable "name" {
@@ -32,10 +25,13 @@ variable "kinesis_stream_arn" {
 }
 
 variable "processor" {
-  type = string
 }
 
-resource "aws_kinesis_firehose_delivery_stream" "kinesis_firehose_stream_transform" {
+variable "enabled" {
+  type = bool
+}
+
+resource "aws_kinesis_firehose_delivery_stream" "kinesis_firehose_stream" {
   name        = var.name
   destination = "extended_s3"
   tags        = var.tags
@@ -52,38 +48,19 @@ resource "aws_kinesis_firehose_delivery_stream" "kinesis_firehose_stream_transfo
     buffer_interval = 60
 
     processing_configuration {
-      enabled = "true"
+      enabled = var.enabled
 
       processors {
         type = "Lambda"
 
         parameters {
           parameter_name  = "LambdaArn"
-          parameter_value = var.processor
+          parameter_value = var.enabled == true ? var.processor : var.processor
         }
       }
     }
 
-    data_format_conversion_configuration {
-      input_format_configuration {
-        deserializer {
-          hive_json_ser_de {}
-        }
-      }
-
-      output_format_configuration {
-        serializer {
-          parquet_ser_de {}
-        }
-      }
-
-      schema_configuration {
-        database_name = var.database
-        table_name    = var.table
-        role_arn      = aws_iam_role.firehose_role.arn
-      }
-    }
-    prefix              = "events/${var.event.scope}/${var.event.name}/transform/year=!{timestamp:yyyy}/month=!{timestamp:MM}/day=!{timestamp:dd}/hl_hour=!{timestamp:HH}/"
+    prefix              = "events/${var.event.scope}/${var.event.name}/year=!{timestamp:yyyy}/month=!{timestamp:MM}/day=!{timestamp:dd}/hour=!{timestamp:HH}/"
     error_output_prefix = "error/year=!{timestamp:yyyy}/month=!{timestamp:MM}/day=!{timestamp:dd}/hour=!{timestamp:HH}/!{firehose:error-output-type}"
   }
 }
@@ -120,7 +97,8 @@ resource "aws_iam_policy" "fire_hose_policy" {
       "Effect": "Allow",
       "Action": [
         "glue:*",
-        "kinesis:*"
+        "kinesis:*",
+        "lambda:*"
       ],
       "Resource": "*"
     },
@@ -156,7 +134,7 @@ resource "aws_iam_role_policy_attachment" "role_policy_fire_hose_attach" {
 // FailedConversion.Records Alarm - 1 in 30 seconds.
 resource "aws_cloudwatch_metric_alarm" "failed-conversion-alarm" {
 
-  alarm_name          = "whale-event-${var.event.scope}-${var.event.name}-failed-conversion-alarm"
+  alarm_name          = "event-${var.event.scope}-${var.event.name}-failed-conversion-alarm"
   comparison_operator = "GreaterThanOrEqualToThreshold"
   evaluation_periods  = 1
   metric_name         = "FailedConversion.Records"
@@ -164,7 +142,7 @@ resource "aws_cloudwatch_metric_alarm" "failed-conversion-alarm" {
   period              = 60
   statistic           = "Sum"
   threshold           = 1
-  alarm_description   = "AWS/Lambda Invocations - whale-event-${var.event.scope}-${var.event.name}"
+  alarm_description   = "AWS/Lambda Invocations - event-${var.event.scope}-${var.event.name}"
   alarm_actions = [
   "arn:aws:sns:us-east-1:280917728158:squad-data-alarm"]
 
@@ -176,5 +154,5 @@ resource "aws_cloudwatch_metric_alarm" "failed-conversion-alarm" {
 }
 
 output "name" {
-  value = aws_kinesis_firehose_delivery_stream.kinesis_firehose_stream_transform.name
+  value = aws_kinesis_firehose_delivery_stream.kinesis_firehose_stream.name
 }
