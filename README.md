@@ -4,6 +4,8 @@
 
 `export ACCESS_KEY="<key>`
 `export ACCESS_SECRET_KEY="<secret_key>`
+`export TF_VAR_access_key="<key>`
+`export TF_VAR_access_secret_key=="<secret_key>`
 
 ## Make your lambdas
 
