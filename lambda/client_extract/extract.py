@@ -10,7 +10,7 @@ from botocore.exceptions import ClientError
 def lambda_handler(event, cont):
     try:
         url = os.environ['URL']
-        put_record(event)
+        put_record(url)
     except Exception as e:
         print(e)
 
@@ -31,17 +31,12 @@ def generate_partition():
 def put_record(request):
     client = boto3.client('kinesis')
     partition_key = generate_partition()
-    request = api_request(request)
-    event = json.dumps(event)
-    
-    ## usei isto para simular a entrada do evento pelo cloudwatch, pois a api punkapi, esta retornando erro    
-    # event = request[0]
-    # payload  = json.dumps(event)
+    req = api_request(request)
 
     try:
         response = client.put_record(
             StreamName=os.environ['STREAM_NAME'],
-            Data=event,
+            Data=json.dumps(req),
             PartitionKey=partition_key
         )
     except ClientError as e:
