@@ -10,10 +10,9 @@
 `make lambda_processor`
 `make lambda_client`
 
-## Deploy infra on cloud
-
+## Deploy infra
 `make deploy`
 
-## Destruct infra on cloud
+## Destruct infra
 
-`make deploy`
+`make destroy`
