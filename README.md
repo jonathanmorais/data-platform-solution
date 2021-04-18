@@ -16,4 +16,4 @@
 
 ## Destruct infra on cloud
 
-`make deploy`
+`make destroy`
