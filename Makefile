@@ -15,7 +15,7 @@ plan:
 	cd $(PROJECT_PATH)/infra/environments/prod && terraform init --backend-config="access_key=$(ACCESS_KEY)" --backend-config="secret_key=$(ACCESS_SECRET_KEY)"
 	cd $(PROJECT_PATH)/infra/environments/prod && terraform plan
 
-apply:
+deploy:
 	cd $(PROJECT_PATH)/infra/environments/prod && terraform init --backend-config="access_key=$(ACCESS_KEY)" --backend-config="secret_key=$(ACCESS_SECRET_KEY)"
 	cd $(PROJECT_PATH)/infra/environments/prod && terraform apply --auto-approve
 
@@ -37,3 +37,9 @@ jupyter-run:
 
 jupyter-remove:
 	docker rm -f $(PROJECT_NAME)
+
+lambda_processor:
+	cd $(PROJECT_PATH)/lambda/client_processor && zip -r -9 ../../processor.zip .
+
+lambda_extract:
+	cd $(PROJECT_PATH)/lambda/client_extract && zip -r -9 ../../extract.zip .	

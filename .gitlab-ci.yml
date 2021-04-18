@@ -60,4 +60,4 @@ prod:deploy:
     dependencies:
         - lambda
     script:
-        - make apply       
+        - make deploy       
