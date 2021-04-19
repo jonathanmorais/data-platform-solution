@@ -9,7 +9,7 @@ import requests
 import pandas as pd
 import joblib
 from sklearn.model_selection import train_test_split
-from input import athena_query_to_dataframe
+from app.input import athena_query_to_dataframe
 import traceback
 
 app = Flask(__name__)
