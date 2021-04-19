@@ -31,4 +31,6 @@ override.tf.json
 *.zip
 *.terraform
 *.env
+.ipynb_checkpoints
+__pycache__
 tests
