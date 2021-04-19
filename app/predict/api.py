@@ -11,6 +11,7 @@ import joblib
 from sklearn.model_selection import train_test_split
 from app.input import athena_query_to_dataframe
 import traceback
+from app.classes import make_class
 
 app = Flask(__name__)
 
@@ -34,7 +35,7 @@ def predict():
             
             prediction = list(lr.predict(X_test))
 
-            return {'prediction': prediction}
+            return {'prediction': make_class(predict)}
 
         except:
 
