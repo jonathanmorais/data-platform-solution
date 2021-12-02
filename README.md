@@ -7,7 +7,7 @@
 `export TF_VAR_access_key="<key>`
 `export TF_VAR_access_secret_key=="<secret_key>`
 
-## Make your lambdas
+## Package your lambdas
 
 `make lambda_processor`
 `make lambda_client`
